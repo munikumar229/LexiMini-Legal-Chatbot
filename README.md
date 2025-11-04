@@ -10,7 +10,7 @@ AI-powered legal assistant using RAG (Retrieval-Augmented Generation) to answer 
 
 Watch LexiMini in action:
 
-![Demo Video](https://github.com/user-attachments/assets/85481859-9231-4636-9582-83810ac6634d)
+https://github.com/user-attachments/assets/85481859-9231-4636-9582-83810ac6634d
 
 **What the demo shows:**
 - ✅ Legal question answering in real-time
