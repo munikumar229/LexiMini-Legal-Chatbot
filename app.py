@@ -195,19 +195,24 @@ qa = ConversationalRetrievalChain.from_llm(
 
 # Display previous messages
 for message in st.session_state.messages:
-    with st.chat_message(message.get("role")):
-        st.write(message.get("content"))
+    role = message.get("role")
+    if role == "user":
+        with st.chat_message("user", avatar="👤"):
+            st.write(message.get("content"))
+    else:
+        with st.chat_message("assistant", avatar="⚖️"):
+            st.write(message.get("content"))
 
 # Input prompt
 input_prompt = st.chat_input("Say something")
 
 if input_prompt:
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="👤"):
         st.write(input_prompt)
 
     st.session_state.messages.append({"role": "user", "content": input_prompt})
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="⚖️"):
         with st.status("Thinking 💡...", expanded=True):
             result = qa.invoke(input=input_prompt)
             message_placeholder = st.empty()

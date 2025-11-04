@@ -6,6 +6,18 @@ AI-powered legal assistant using RAG (Retrieval-Augmented Generation) to answer 
 
 **Try it now**: [https://leximini-legal-chatbot.streamlit.app/](https://leximini-legal-chatbot.streamlit.app/)
 
+## 🎥 Demo Video
+
+Watch LexiMini in action:
+
+![Demo Video](demo.mp4)
+
+**What the demo shows:**
+- ✅ Legal question answering in real-time
+- ✅ Source attribution from legal documents  
+- ✅ Natural conversation flow
+- ✅ Professional UI with custom avatars
+
 ## Quick Start
 
 1. **Get API Key**: Sign up at [Groq Console](https://console.groq.com/keys) and get your API key
