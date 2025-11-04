@@ -11,7 +11,26 @@ from dotenv import load_dotenv
 
 # Set up environment variables
 load_dotenv()
+
+# API key validation with helpful error messages
 groq_api_key = os.getenv("GROQ_API_KEY")
+if not groq_api_key:
+    st.error("""
+    🔑 **GROQ_API_KEY not found!** 
+    
+    Please set up your API keys:
+    1. Create a `.env` file in the project root
+    2. Add: `GROQ_API_KEY=your_actual_api_key`
+    3. Get your key from: https://console.groq.com/keys
+    
+    Or set the environment variable: `export GROQ_API_KEY=your_key`
+    """)
+    st.stop()
+
+# Optional configurations with defaults
+vector_store_path = os.getenv("VECTOR_STORE_PATH", "my_vector_store")
+embedding_model = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
 # Streamlit UI setup
 st.set_page_config(
@@ -118,10 +137,25 @@ if "memory" not in st.session_state:
 
 # Initialize embeddings and vector store
 embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    model_name=embedding_model,
     model_kwargs={'device': 'cpu'}  # Use CPU to avoid GPU dependencies
 )
-db = FAISS.load_local("my_vector_store", embeddings, allow_dangerous_deserialization=True)
+
+# Check if vector store exists
+if not os.path.exists(vector_store_path):
+    st.error(f"""
+    📁 **Vector store not found at `{vector_store_path}`!**
+    
+    Please run the ingestion script first:
+    ```bash
+    python ingestion.py
+    ```
+    
+    This will process your PDF documents and create the vector store.
+    """)
+    st.stop()
+
+db = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
 db_retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 4})
 
 # Define the prompt template
@@ -136,7 +170,20 @@ ANSWER:
 prompt = PromptTemplate(template=prompt_template, input_variables=['context', 'question', 'chat_history'])
 
 # Initialize the LLM
-llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama-3.1-8b-instant")
+try:
+    llm = ChatGroq(groq_api_key=groq_api_key, model_name=groq_model)
+except Exception as e:
+    st.error(f"""
+    🤖 **Error initializing Groq LLM:**
+    
+    {str(e)}
+    
+    Please check:
+    - Your GROQ_API_KEY is valid
+    - You have internet connection
+    - The model `{groq_model}` is available
+    """)
+    st.stop()
 
 # Set up the QA chain
 qa = ConversationalRetrievalChain.from_llm(

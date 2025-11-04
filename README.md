@@ -1,103 +1,147 @@
-# LawGPT: LLM-based Legal ChatBot
+# LexiMini Legal Chatbot ⚖️
 
-![Python 3.12](https://img.shields.io/badge/Python-3.10-brightgreen.svg) [![ChatGPT](https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white)](#)  
+AI-powered legal assistant using RAG (Retrieval-Augmented Generation) to answer questions from legal documents. Built with Streamlit, LangChain, and Groq LLM.
 
-LawGPT is a Large Language Model (LLM) based chatbot designed to provide legal information. The chatbot utilizes RAG architecture, advanced language models and embeddings to retrieve and generate contextually relevant answers from a provided legal document corpus. This project specifically focuses on the Indian Penal Code and other related legal documents.
+## Quick Start
 
-## Table of Contents
+1. **Get API Key**: Sign up at [Groq Console](https://console.groq.com/keys) and get your API key
 
-- [Introduction](#introduction)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Setup and Installation](#setup-and-installation)
-- [Usage](#usage)
-- [Deployed Website](#deployed-website)
+2. **Clone & Setup**:
+   ```bash
+   git clone https://github.com/munikumar229/LexiMini-Legal-Chatbot.git
+   cd LexiMini-Legal-Chatbot
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-## Demo Video
+3. **Configure**:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your GROQ_API_KEY
+   ```
 
-https://github.com/itsmesneha/Legal-CHATBOT/assets/87040207/83741dc0-1b0f-43b6-a13e-c35046b831e0
-
-## Introduction
-
-LawGPT aims to assist users by providing accurate and concise legal information based on the Indian Penal Code and related legal documents. The chatbot retrieves relevant context from the knowledge base to answer user queries efficiently.
+4. **Add Documents & Run**:
+   ```bash
+   # Put your PDF files in the data/ folder
+   python ingestion.py  # Process documents
+   streamlit run app.py # Start the chatbot
+   ```
 
 ## Features
 
-- Conversational interface for querying legal information
-- Uses FAISS for efficient vector search
-- Embeds documents using Google Generative AI Embeddings
-- Handles large document sets by splitting and batching
-- Provides sources for retrieved information
+- 💬 Interactive legal Q&A interface
+- 📚 RAG pipeline with FAISS vector search  
+- 🔍 Source attribution for answers
+- 🚀 Easy deployment to Streamlit Cloud
 
-## Architecture
+## Deployment
 
-The architecture of LawGPT includes the following components:
+### Streamlit Cloud (Recommended)
+1. Fork this repo
+2. Connect to [Streamlit Cloud](https://share.streamlit.io)
+3. Set secrets in app settings:
+   ```toml
+   GROQ_API_KEY = "your_groq_api_key"
+   ```
 
-1. **Document Loader**: Loads legal documents from a directory of PDF files.
-2. **Text Splitter**: Splits documents into manageable chunks for embedding.
-3. **Embeddings**: Uses Google Generative AI Embeddings to transform text into vector representations.
-4. **Vector Store**: Utilizes FAISS to store and retrieve document embeddings.
-5. **LLM**: Uses the ChatGroq API to generate responses based on retrieved documents and user queries.
-6. **Memory**: Maintains a conversation buffer to provide context in conversations.
+### GitHub Secrets (for CI/CD)
+Set repository secrets for automated deployment:
+- `GROQ_API_KEY`: Your Groq API key
 
-## Setup and Installation
+See [GitHub Secrets Setup Guide](GITHUB_SECRETS_SETUP.md) for detailed instructions.
 
-### Prerequisites
+## Project Structure
 
-- Python 3.12
-- [Streamlit](https://streamlit.io/)
-- [LangChain Community](https://github.com/langchain-ai/langchain-community)
-- [Google Generative AI](https://github.com/google-research/google-research/tree/master/large-scale-causal-ml)
-- [FAISS](https://github.com/facebookresearch/faiss)
-
-### Installation Steps
-
-1. **Clone the Repository**
-
-```bash
-   git clone https://github.com/yourusername/lawgpt.git
-   cd lawgpt
+```
+├── app.py              # Streamlit chatbot interface
+├── ingestion.py        # PDF processing & vector store creation
+├── requirements.txt    # Python dependencies
+├── .env.example        # Environment variables template
+└── data/              # Put your PDF files here
 ```
 
-2.  **Set Up and Activate Virtual Environment**
+## Troubleshooting
+
+- **No API key**: Copy `.env.example` to `.env` and add your Groq API key
+- **No documents**: Add PDF files to `data/` folder and run `python ingestion.py`
+- **Import errors**: Try `pip install faiss-cpu` if FAISS installation fails
+
+## License
+
+MIT License - feel free to use for your projects!
 
 ```bash
-    conda create -p venv python==3.12
-    conda activate C:\directory\venv
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-3. **Install Dependencies**
+2. Install dependencies
 
 ```bash
-    pip install -r requirements.txt
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
-4. **Set Up Environment Variables**
+Notes: If you need FAISS and the wheel in `requirements.txt` doesn't work, install `faiss-cpu` explicitly:
 
-Create a .env file in the project root directory and add your API keys:
 ```bash
-    GOOGLE_API_KEY=your_google_api_key
-    GROQ_API_KEY=your_groq_api_key
+pip install faiss-cpu
 ```
 
-5. **Split, Embed and Save Documents**
+3. Provide environment variables
 
-Run the following script to load, split, embed, and save your legal documents:
+Create a `.env` file in the project root (example below). The project looks for API keys for embedding/LLM providers; if you use local models or open alternatives you may not need all keys.
+
+Example `.env`:
+
+```text
+# Google Generative Embeddings (optional)
+GOOGLE_API_KEY=your_google_api_key
+
+# LLM provider (e.g. GROQ, OpenAI, or local model endpoints)
+GROQ_API_KEY=your_groq_api_key
+
+# Optional: path to store vector index (default: my_vector_store/index.faiss)
+VECTOR_STORE_PATH=my_vector_store/index.faiss
+```
+
+4. Ingest documents (build embeddings / FAISS index)
+
+Place your PDFs or text files in a folder (e.g. `data/`) and run:
+
 ```bash
-    python ingestion.py
+python ingestion.py
 ```
 
-## Usage
-Run the Streamlit Application
+This will create/overwrite the FAISS index at the configured `VECTOR_STORE_PATH`.
+
+5. Run the app
 
 ```bash
 streamlit run app.py
 ```
-## Deployed Website
 
-LawGPT is also deployed on Streamlit Cloud. You can access the chatbot directly via the following link:
+Open the Streamlit URL printed in the terminal (usually http://localhost:8501).
 
-[https://legal-chatbot-llm.streamlit.app/](https://legal-chatbot-llm.streamlit.app/)
+## Ingestion & vector store
+
+- `ingestion.py` handles loading files, text splitting, embedding, and saving to FAISS. If your corpus is large, ingestion may take time — monitor memory and disk usage.
+- `my_vector_store/index.faiss` (if present) is the on-disk example vector store; you can replace it by re-running ingestion.
+
+## Configuration and env vars
+
+- GROQ_API_KEY — for ChatGroq / Groq-based LLM usage (if used)
+
+If you use different providers (OpenAI, local LLMs, or alternatives) adapt `app.py` and `ingestion.py` to the provider SDKs you choose.
+
+
+
+
+
+
+
+
 
 
 
