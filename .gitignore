@@ -35,13 +35,7 @@ env/
 leximini/
 
 # Vector stores and data
-my_vector_store/
-test_vector_store/
-data/*.pdf
-data/*.txt
-*.faiss
-*.pkl
-attachments/
+
 
 # IDE
 .vscode/
