@@ -69,3 +69,7 @@ logs/
 # Security scan results
 bandit-report.json
 safety-report.txt
+
+Demo.mp4
+.devcontainer/
+.streamlit
