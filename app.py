@@ -135,11 +135,39 @@ if "messages" not in st.session_state:
 if "memory" not in st.session_state:
     st.session_state.memory = ConversationBufferWindowMemory(k=2, memory_key="chat_history", return_messages=True)
 
-# Initialize embeddings and vector store
-embeddings = HuggingFaceEmbeddings(
-    model_name=embedding_model,
-    model_kwargs={'device': 'cpu'}  # Use CPU to avoid GPU dependencies
-)
+# Initialize embeddings and vector store with fallback
+try:
+    embeddings = HuggingFaceEmbeddings(
+        model_name=embedding_model,
+        model_kwargs={'device': 'cpu'}  # Use CPU to avoid GPU dependencies
+    )
+except NotImplementedError:
+    # Fallback to a small CPU-friendly model for Streamlit Cloud compatibility
+    fallback_model = "sentence-transformers/all-MiniLM-L6-v2"
+    st.warning(
+        f"⚠️ Embedding model '{embedding_model}' failed to load on this host. "
+        f"Falling back to '{fallback_model}' for compatibility."
+    )
+    embeddings = HuggingFaceEmbeddings(
+        model_name=fallback_model,
+        model_kwargs={'device': 'cpu'}
+    )
+except Exception as e:
+    # General fallback for any other embedding issues
+    fallback_model = "sentence-transformers/all-MiniLM-L6-v2"
+    st.error(f"""
+    🚨 **Embedding Model Error**: {str(e)}
+    
+    Using fallback model: `{fallback_model}`
+    
+    For production deployment, consider using:
+    - Small CPU-friendly models
+    - External embedding APIs (OpenAI, HuggingFace)
+    """)
+    embeddings = HuggingFaceEmbeddings(
+        model_name=fallback_model,
+        model_kwargs={'device': 'cpu'}
+    )
 
 # Check if vector store exists
 if not os.path.exists(vector_store_path):

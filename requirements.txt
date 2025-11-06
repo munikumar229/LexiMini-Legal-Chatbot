@@ -1,6 +1,7 @@
 # Core ML and AI libraries
 faiss-cpu>=1.7.4
-sentence-transformers>=2.2.0
+sentence-transformers>=2.2.0,<3.0.0
+torch>=2.0.0,<3.0.0
 
 # LangChain ecosystem
 langchain>=0.1.0
