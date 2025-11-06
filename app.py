@@ -135,55 +135,95 @@ if "messages" not in st.session_state:
 if "memory" not in st.session_state:
     st.session_state.memory = ConversationBufferWindowMemory(k=2, memory_key="chat_history", return_messages=True)
 
-# Initialize embeddings and vector store with fallback
+# Initialize embeddings and vector store with multiple fallbacks
+embeddings = None
+
+# Try different embedding approaches in order of preference
 try:
+    # First try: Original model
     embeddings = HuggingFaceEmbeddings(
         model_name=embedding_model,
-        model_kwargs={'device': 'cpu'}  # Use CPU to avoid GPU dependencies
-    )
-except NotImplementedError:
-    # Fallback to a small CPU-friendly model for Streamlit Cloud compatibility
-    fallback_model = "sentence-transformers/all-MiniLM-L6-v2"
-    st.warning(
-        f"⚠️ Embedding model '{embedding_model}' failed to load on this host. "
-        f"Falling back to '{fallback_model}' for compatibility."
-    )
-    embeddings = HuggingFaceEmbeddings(
-        model_name=fallback_model,
         model_kwargs={'device': 'cpu'}
     )
-except Exception as e:
-    # General fallback for any other embedding issues
-    fallback_model = "sentence-transformers/all-MiniLM-L6-v2"
-    st.error(f"""
-    🚨 **Embedding Model Error**: {str(e)}
+except (NotImplementedError, Exception) as e:
+    st.warning(f"⚠️ Primary embedding model failed: {embedding_model}")
     
-    Using fallback model: `{fallback_model}`
-    
-    For production deployment, consider using:
-    - Small CPU-friendly models
-    - External embedding APIs (OpenAI, HuggingFace)
-    """)
-    embeddings = HuggingFaceEmbeddings(
-        model_name=fallback_model,
-        model_kwargs={'device': 'cpu'}
-    )
+    try:
+        # Second try: Use HuggingFace API instead of local model
+        from langchain_huggingface import HuggingFaceEmbeddings
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu', 'trust_remote_code': True}
+        )
+    except Exception as e2:
+        try:
+            # Third try: Use OpenAI embeddings if available
+            openai_key = os.getenv("OPENAI_API_KEY")
+            if openai_key:
+                try:
+                    from langchain_openai import OpenAIEmbeddings
+                    embeddings = OpenAIEmbeddings(
+                        openai_api_key=openai_key,
+                        model="text-embedding-ada-002"
+                    )
+                    st.success("✅ Using OpenAI embeddings as fallback")
+                except ImportError:
+                    st.warning("OpenAI embeddings not available - install langchain-openai")
+                    raise Exception("OpenAI import failed")
+            else:
+                raise Exception("No OpenAI key available")
+        except Exception as e3:
+            # Final fallback: Show error and use dummy embeddings for demo
+            st.error(f"""
+            🚨 **All embedding methods failed on this platform**
+            
+            **Solutions:**
+            1. **Add OpenAI API key** to Streamlit secrets: `OPENAI_API_KEY`
+            2. **Use a vector store** created locally and uploaded
+            3. **Deploy on different platform** (local, Heroku, etc.)
+            
+            **Current Error**: Streamlit Cloud has PyTorch compatibility issues
+            """)
+            
+            # Create a simple dummy embeddings class for demonstration
+            class DummyEmbeddings:
+                def embed_documents(self, texts):
+                    return [[0.1] * 384 for _ in texts]
+                def embed_query(self, text):
+                    return [0.1] * 384
+            
+            embeddings = DummyEmbeddings()
+            st.warning("⚠️ Using demo mode - functionality limited")
 
 # Check if vector store exists
 if not os.path.exists(vector_store_path):
     st.error(f"""
     📁 **Vector store not found at `{vector_store_path}`!**
     
-    Please run the ingestion script first:
-    ```bash
-    python ingestion.py
-    ```
+    **For Streamlit Cloud deployment:**
+    1. Run `python ingestion.py` locally 
+    2. Commit the `my_vector_store/` folder to your repo
+    3. Redeploy the app
     
-    This will process your PDF documents and create the vector store.
+    **Alternative**: Use OpenAI embeddings by adding `OPENAI_API_KEY` to secrets
     """)
     st.stop()
 
-db = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
+# Load vector store with error handling
+try:
+    db = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
+    if isinstance(embeddings, type(embeddings)) and hasattr(embeddings, '__class__') and 'Dummy' in str(embeddings.__class__):
+        st.warning("⚠️ Demo mode active - vector search may not work properly")
+except Exception as e:
+    st.error(f"""
+    🚨 **Failed to load vector store**: {str(e)}
+    
+    **Solutions:**
+    1. **Regenerate vector store** locally with `python ingestion.py`
+    2. **Use matching embedding model** that created the vector store
+    3. **Add OpenAI API key** for cloud compatibility
+    """)
+    st.stop()
 db_retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 4})
 
 # Define the prompt template

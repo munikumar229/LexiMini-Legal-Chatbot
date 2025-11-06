@@ -21,6 +21,10 @@ streamlit>=1.28.0
 # Utilities
 python-dotenv>=1.0.0
 
+# Optional: Fallback embedding providers
+langchain-openai>=0.0.5
+openai>=1.0.0
+
 # Optional: Google AI (for future use)
 # langchain-google-genai>=1.0.0
 
